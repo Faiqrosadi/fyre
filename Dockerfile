@@ -8,7 +8,7 @@ COPY . /usr/src/app
 RUN mvn package
 
 # For Java 11,
-FROM adoptopenjdk/openjdk:17-jdk-slim-buster
+FROM adoptopenjdk/openjdk:17-oracle
 
 ARG JAR_FILE=fyre-0.0.1-SNAPSHOT.jar
 
