@@ -1,5 +1,5 @@
 # AS <NAME> to name this stage as maven
-FROM maven:3.8.6 AS maven
+FROM maven:3.8.3 AS maven
 LABEL MAINTAINER="rosadi@gmail.com"
 
 WORKDIR /usr/src/app
