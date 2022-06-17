@@ -81,9 +81,9 @@
                                     </div>
                                     <div class="px-1 col-md-4">
                                         <div class="form-group">
-                                            <label>Country</label>
+                                            <label>University</label>
                                             <select class="form-control" th:field="*{univId}">
-                                            <option th:if="${user.univId == null}" value="">Select your country</option>
+                                            <option th:if="${user.univId == null}" value="">Select your university</option>
                                             <option th:each="univ : ${universities}" th:value="${univ.id}" th:text="${univ.name}" th:selected="${univ.id} == ${user.univId}"></option>
                                         </select>
                                         </div>
