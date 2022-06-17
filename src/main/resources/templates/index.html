@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <link rel="stylesheet" th:href="@{/css/all.min.css}">
+    <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/css/flag-icon.min.css}">
+    <link rel="stylesheet" th:href="@{/css/main.css}">
+    <link rel="stylesheet" th:href="@{/css/profileSummaryCard.css}">
+    <link rel="stylesheet" th:href="@{/css/secondaryNav.css}">
+    <title>Fyre</title>
+</head>
+<body>
+
+<header th:replace="fragments/header :: header('home')">...</header>
+
+<div class="container">
+    <div class="jumbotron">
+        <h1 class="display-4">Fyre</h1>
+        <p class="lead">Bukan sekedar lomba biasa</p>
+        <hr class="my-4">
+        <p>Cari lomba senyamanmu</p>
+    </div>
+
+
+    <footer th:replace="fragments/footer :: footer">...</footer>
+
+</div>
+
+
+
+
+<script th:src="@{/js/jquery-3.4.1.min.js}" ></script>
+<script th:src="@{/js/popper.min.js}" ></script>
+<script th:src="@{/js/bootstrap.min.js}" ></script>
+</body>
+
+</html>

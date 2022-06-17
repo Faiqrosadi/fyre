@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/all.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/bootstrap.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/flag-icon.min.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/main.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/profileSummaryCard.css}">
+    <link rel="stylesheet" type="text/css" th:href="@{../../../css/secondaryNav.css}">
+
+    <title th:text="'Fyre | ' + ${problem.index} + ' - ' + ${problem.name}"></title>
+</head>
+
+<body>
+
+<header th:replace="fragments/header :: header('contests')">...</header>
+
+<div class="container" th:with="contestStatus = ${contest.getContestStatus().toString()}">
+
+    <div th:replace="fragments/profileSecondaryNav :: contestSecondaryNav('problems')"></div>
+
+
+    <div class="row">
+        <div class="col-8">
+            <div class="problem-statement">
+                <div class="problem-section problem-header">
+                    <h5 th:text="${problem.index != null ? problem.index + '. ' : ''} + ${problem.name}" class="text-center font-weight-bold"></h5>
+                </div>
+                <div class="problem-section problem-description">
+                    <div th:text="${problem.description}"></div>
+                </div>
+                <div class="problem-section problem-input-section">
+                    <h6 class="font-weight-bold">Input</h6>
+                    <div th:text="${problem.inputDescription}"></div>
+                </div>
+                <div class="problem-section problem-output-section">
+                    <h6 class="font-weight-bold">Output</h6>
+                    <div th:text="${problem.outputDescription}"></div>
+                </div>
+                <div class="problem-section problem-io-examples" th:if="${problem.samples}">
+                    <h6 class="font-weight-bold">Examples</h6>
+                    <table class="table text-left" th:each="sample : ${problem.samples}">
+                        <thead>
+                            <tr class="row">
+                                <td class="col-6">input</td>
+                                <td class="col-6">output</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="row">
+                                <td class="example-input col-6">
+                                    <pre th:text="${sample.input}"></pre>
+                                </td>
+                                <td class="example-output col-6">
+                                    <pre th:text="${sample.output}"></pre>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="problem-section problem-notes-section" th:if="${problem.notes}">
+                    <h6 class="font-weight-bold">Notes</h6>
+                    <div th:text="${problem.notes}"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4">
+            <div th:replace="fragments/contestFragments :: contestStatusFragment">
+
+            </div>
+
+            <div sec:authorize="isAuthenticated()">
+                <div th:if="${contestStatus.equals('FINISHED')}">
+                    <div  th:with="isSolved=${contest.isUserSolvedProblem(#authentication.getPrincipal().getUsername(), problem.index)}">
+                        <div th:replace="fragments/contestFragments :: submitSection"></div>
+                    </div>
+                </div>
+                <div th:if="${contestStatus.equals('RUNNING')}">
+                    <div th:with="isRegistered= ${@contestService.isRegisteredInContest(contest.id, #authentication.getPrincipal().getUsername())}">
+                        <div th:if="${isRegistered}">
+                            <div  th:with="triesCount = ${@submissionService.getTriesCountForProblem(contest.id, problem.index, #authentication.getPrincipal().getUsername())}, isSolved=${contest.isUserSolvedProblem(#authentication.getPrincipal().getUsername(), problem.index)}">
+                                <div th:replace="fragments/contestFragments :: submitSection"></div>
+                            </div>
+                        </div>
+                        <div th:if="${!isRegistered}">
+                            <div class="alert alert-warning">
+                                Please register in the contest first to be able to submit this problem
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+
+    <footer th:replace="fragments/footer :: footer">...</footer>
+</div>
+
+<script th:src="@{../../../js/jquery-3.4.1.min.js}"></script>
+<script th:src="@{../../../js/popper.min.js}"></script>
+<script th:src="@{../../../js/bootstrap.min.js}"></script>
+
+<script id="MathJax-script"
+        th:src="@{../../../js/tex-mml-chtml.js}">
+</script>
+<script th:src="@{../../../js/moment-with-locales.min.js}"></script>
+
+
+<script>
+$(".custom-file-input").on("change", function() {
+    const fi = document.getElementById('customFile');
+    if(fi.files.length > 1) {
+        $('#customFile').val('');
+        alert("Please select only one file");
+    } else {
+        var fileName = $(this).val().split("\\").pop();
+        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    }
+});
+
+function format(num) {
+    var s = String(num);
+    if(s.length < 2) s = "0" + s;
+    return s;
+}
+
+function updateTime() {
+    var contestStartDate = $(".contestStartDate").html();
+    var contestDurationInSeconds = $(".contestDuration").html() * 60;
+    var now = moment();
+    if (contestStartDate !== undefined) {
+        var contestMoment = moment(contestStartDate.replace("T", " "));
+        var contestTimeInSeconds = contestMoment.seconds() + contestMoment.minutes() * 60 + contestMoment.hours() * 60 * 60;
+        var contestEndTimeInSeconds = contestTimeInSeconds + contestDurationInSeconds;
+        var nowTimeInSeconds = now.seconds() + now.minutes() * 60 + now.hours() * 60 * 60;
+        if (nowTimeInSeconds <= contestEndTimeInSeconds) { // before or running
+            var remainingTimeInSeconds
+            if (nowTimeInSeconds >= contestTimeInSeconds) { // Contest is running
+                remainingTimeInSeconds = contestEndTimeInSeconds - nowTimeInSeconds;
+            } else if (nowTimeInSeconds < contestTimeInSeconds) { // not started
+                remainingTimeInSeconds = contestTimeInSeconds - nowTimeInSeconds;
+            }
+            var hh = Math.floor(remainingTimeInSeconds / 3600);
+            remainingTimeInSeconds %= 3600;
+            var mm = Math.floor(remainingTimeInSeconds / 60);
+            var ss = remainingTimeInSeconds % 60;
+            $(".contestStartDateMoment").html(format(hh) + ":" + format(mm) + ":" + format(ss));
+        }
+    }
+}
+
+updateTime();
+
+setInterval(function() {
+    updateTime();
+}, 1000);
+</script>
+</body>
+
+</html>

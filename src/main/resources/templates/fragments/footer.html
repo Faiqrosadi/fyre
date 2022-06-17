@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+<footer th:fragment="footer">
+    <hr />
+    <div style="text-align: center">
+        <p>&copy; Copyright <span  th:text="${#temporals.format(#temporals.createNow(), 'yyyy')}">2019</span> Faiq Rosadi Arridho </p>
+        <p  th:text="${#temporals.format(#temporals.createNow(), 'yyyy-MM-dd hh:mm zzz')}"></p>
+    </div>
+</footer>
+</body>
+</html>

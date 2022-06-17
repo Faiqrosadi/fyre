@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <link rel="stylesheet" th:href="@{../css/all.min.css}">
+    <link rel="stylesheet" th:href="@{../css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{../css/flag-icon.min.css}">
+    <link rel="stylesheet" th:href="@{../css/main.css}">
+    <link rel="stylesheet" th:href="@{../css/profileSummaryCard.css}">
+    <link rel="stylesheet" th:href="@{../css/secondaryNav.css}">
+    <title>Fyre | Contests</title>
+</head>
+<body>
+
+<header th:replace="fragments/header :: header('contests')">...</header>
+
+<div class="container">
+    <div sec:authorize="hasRole('ROLE_ADMIN')">
+        <div class="text-right createBtn" sec:authorize="isAuthenticated()">
+            <a type="button" class="btn btn-dark" th:href="@{/contests/creator/} + ${#authentication.getPrincipal().getUsername()}">
+                My Contests
+            </a>
+            <a type="button" class="btn btn-dark" th:href="@{/contests/new}">
+                <i class="fas fa-plus-circle"></i> New
+            </a>
+        </div>
+    </div>
+    <h5>Contests</h5>
+    <div class="alert alert-primary" role="alert" th:if="${contestsList==null or contestsList.isEmpty()}">
+        No contests yet!
+    </div>
+    <table id="contestsTable" class="table table-striped table-bordered nowrap table-sm datatable" th:if="${contestsList!=null and !contestsList.isEmpty()}">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Creator</th>
+            <th>Start</th>
+            <th>Duration</th>
+            <th>Status</th>
+            <th>Registered</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr class="table-row " th:each="contest,iter : ${contestsList}" th:with="contestStatus = ${contest.getContestStatus().toString()}">
+            <td style="width:2em" th:text="${iter.count}" class="rowIndex"></td>
+            <td style="width:20em">
+                <span th:if="${contestStatus.equals('NOT_STARTED')}" th:text="${contest.name}"></span>
+                <a th:if="${!contestStatus.equals('NOT_STARTED')}" th:text="${contest.name}" th:href="@{/contests/} + ${contest.id}"></a>
+            </td>
+            <td style="width:10em"><a th:text="${contest.creatorUsername}" th:href="@{/profile/} + ${contest.creatorUsername}"></a></td>
+            <td style="width:5em">
+                <span class="contestStartDate" th:text="${contest.getStartDateFormatted()}"></span>
+            </td>
+            <td style="width:4em" th:text="${T(java.lang.String).format('%02d', contest.durationInMinutes / 60)} + ':' + ${T(java.lang.String).format('%02d', contest.durationInMinutes % 60)}">
+                <input type="hidden" class="durationInMinutes" th:value="${contest.durationInMinutes}">
+            </td>
+            <td style="width:6em">
+                <div th:if="${contestStatus.equals('FINISHED')}">
+                    Finished
+                    <br />
+                    <a th:href="@{/contests/} + ${contest.id} + '/standings'" style="color: #007bff">Standings</a>
+                </div>
+                <div th:if="${contestStatus.equals('RUNNING')}">
+                    <span class="contestStartDateMoment" th:text="${contest.durationInMinutes}"></span>
+                    <br />
+                    <span class="contestStatusDescription">Running</span>
+                </div>
+                <div th:if="${contestStatus.equals('NOT_STARTED')}">
+                    <span class="contestStartDateMoment" th:text="${contest.durationInMinutes}"></span>
+                    <br />
+                    <span class="contestStatusDescription">Before</span>
+                </div>
+            </td>
+            <td style="width:4em">
+                <span th:text="'x' + ${contest.participants.size()}"></span>
+                <div sec:authorize="isAuthenticated()">
+                    <div th:if="${!contestStatus.equals('FINISHED')}">
+                        <div th:with="isRegistered=${@contestService.isRegisteredInContest(contest.id, #authentication.getPrincipal().getUsername())}">
+                            <div th:if="${!isRegistered}">
+                                <form  th:action="@{/contests/} + ${contest.id} + '/register'" th:method="POST">
+                                    <input type="hidden" name="username" th:value="${#authentication.getPrincipal().getUsername()}">
+                                    <button class="btn btn-primary btn-sm" style="min-width: 5em">Register</button>
+                                </form>
+                            </div>
+                            <div th:if="${isRegistered and !contestStatus.equals('NOT_STARTED')}">
+                                <a type="button" class="btn btn-primary btn-sm" th:href="@{/contests/} + ${contest.id}" style="min-width: 5em">Enter</a>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div th:if="${contestStatus.equals('FINISHED')}">
+                        <a type="button" class="btn btn-success btn-sm" th:href="@{/contests/} + ${contest.id}" style="min-width: 5em">Up Solve</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <footer th:replace="fragments/footer :: footer">...</footer>
+</div>
+
+<script th:src="@{../js/jquery-3.4.1.min.js}" ></script>
+<script th:src="@{../js/popper.min.js}" ></script>
+<script th:src="@{../js/bootstrap.min.js}" ></script>
+<script th:src="@{../js/moment-with-locales.min.js}"></script>
+<script>
+
+var contestsDurations = {};
+
+function format(num) {
+    var s = String(num);
+    if(s.length < 2) s = "0" + s;
+    return s;
+}
+
+function updateTime() {
+    $("#contestsTable tr").each(function() {
+        var contestStartDate = $(this).find(".contestStartDate").html();
+        var rowIndex = $(this).find(".rowIndex").html();
+        if(contestsDurations[rowIndex] === undefined) {
+            contestsDurations[rowIndex] = $(this).find( ".contestStartDateMoment" ).html() * 60;
+        }
+        var contestDurationInSeconds = contestsDurations[rowIndex];
+        var now = moment();
+        if(contestStartDate !== undefined) {
+            var contestMoment = moment(contestStartDate);
+            var fromNow = contestMoment.fromNow();
+            if(now.dayOfYear() < contestMoment.dayOfYear()) {
+                $(this).find(".contestStartDateMoment").html(fromNow);
+            } else {
+                var contestTimeInSeconds = contestMoment.seconds() + contestMoment.minutes() * 60 + contestMoment.hours() * 60 * 60;
+                var contestEndTimeInSeconds = contestTimeInSeconds + contestDurationInSeconds;
+                var nowTimeInSeconds = now.seconds() + now.minutes() * 60 + now.hours() * 60 * 60;
+                if(nowTimeInSeconds <= contestEndTimeInSeconds) { // before or running
+                    var remainingTimeInSeconds;
+                    if(nowTimeInSeconds >= contestTimeInSeconds) { // Contest is running
+                        remainingTimeInSeconds = contestEndTimeInSeconds - nowTimeInSeconds;
+                         $(this).find(".contestStatusDescription").html("Running");
+                    } else if(nowTimeInSeconds < contestTimeInSeconds) { // not started
+                        remainingTimeInSeconds = contestTimeInSeconds - nowTimeInSeconds;
+                        $(this).find(".contestStatusDescription").html("Before");
+                    }
+                    var hh = Math.floor(remainingTimeInSeconds / 3600);
+                    remainingTimeInSeconds %= 3600;
+                    var mm = Math.floor(remainingTimeInSeconds / 60);
+                    var ss = remainingTimeInSeconds % 60;
+                    $(this).find(".contestStartDateMoment").html(format(hh) + ":" + format(mm) + ":" + format(ss));
+                }
+            }
+        }
+
+    });
+}
+
+updateTime();
+
+setInterval(function() {
+    updateTime();
+}, 1000);
+</script>
+</body>
+
+</html>

@@ -1,0 +1,26 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<body>
+    <div th:fragment="profileSummary" class="user-summary card">
+        <img class="img-thumbnail img-responsive" th:src="${user.photo} ? @{'/uploads/photos/' + ${user.photo}} : @{/images/avatar.png}" alt="Avatar">
+        <div class="caption">
+            <div id="userProfileSummaryMainInfo">
+                <div id="userSummaryNameAndHandle">
+                    <h4 class="user-full-name"><span th:text="${user.firstName} + ' ' + ${user.lastName}"></span></h4>
+                    <a th:text="'@' + ${user.username}" th:href="@{'/profile/' + ${user.username}}"></a>
+                </div>
+                <div class="mb-1"><span th:if="${user.univId}"><span><span th:class="'flag-icon flag-icon-' + ${user.univId.toLowerCase()}"></span></span> <span th:text="${user.univId}"></span></span>
+                    </span> <span th:if="${user.institute}"><span th:if="${user.univId}">|</span> <i class="fas fa-university"></i></span> <span th:if="${user.institute}" th:text="${user.institute}">Assiut University</span></div>
+            </div>
+            <div>
+                <table id="profile-summary-table" class="table">
+                    <tbody>
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
